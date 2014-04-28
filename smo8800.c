@@ -240,6 +240,9 @@ static struct acpi_driver latitude_acc_driver = {
 	.owner =	THIS_MODULE,
 };
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+module_acpi_driver(latitude_acc_driver);
+#else
 static int __init smo8800_init(void)
 {
 	int result = 0;
@@ -261,6 +264,7 @@ static void __exit smo8800_exit(void)
 
 module_init(smo8800_init);
 module_exit(smo8800_exit);
+#endif
 
 MODULE_DESCRIPTION("Dell laptop freefall driver (ACPI " DRIVER_NAME ")");
 MODULE_LICENSE("GPL");
