@@ -156,11 +156,28 @@ out:
 	return retval;
 }
 
+static const struct file_operations smo8800_misc_fops = {
+	.owner	 = THIS_MODULE,
+	.read	 = smo8800_misc_read,
+	.open	 = smo8800_misc_open,
+	.release = smo8800_misc_release,
+};
+
 static int smo8800_add(struct acpi_device *device)
 {
 	int err;
 	if (!device)
 		return -EINVAL;
+
+	smo8800_dev.miscdev.minor	= MISC_DYNAMIC_MINOR;
+	smo8800_dev.miscdev.name	= "freefall";
+	smo8800_dev.miscdev.fops	= &smo8800_misc_fops;
+	init_waitqueue_head(&smo8800_dev.misc_wait);
+	if (misc_register(&smo8800_dev.miscdev)) {
+		pr_err("misc_register failed\n");
+		return -EINVAL;
+	}
+
 	smo8800_dev.bus_priv = device;
 	atomic_set(&smo8800_dev.count, 0);
 	device->driver_data = &smo8800_dev;
@@ -180,7 +197,15 @@ static int smo8800_add(struct acpi_device *device)
 				   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 				   DRIVER_NAME, &smo8800_dev);
 
+	if (err) {
+		pr_err("request_threaded_irq failed\n");
+		goto out;
+	}
+
+	return 0;
+
 out:
+	misc_deregister(&smo8800_dev.miscdev);
 	return err;
 }
 
@@ -192,6 +217,7 @@ static int smo8800_remove(struct acpi_device *device, int type)
 {
 	if (smo8800_dev.irq)
 		free_irq(smo8800_dev.irq, &smo8800_dev);
+	misc_deregister(&smo8800_dev.miscdev);
 	return 0;
 }
 
@@ -214,13 +240,6 @@ static struct acpi_driver latitude_acc_driver = {
 	.owner =	THIS_MODULE,
 };
 
-static const struct file_operations smo8800_misc_fops = {
-	.owner	 = THIS_MODULE,
-	.read	 = smo8800_misc_read,
-	.open	 = smo8800_misc_open,
-	.release = smo8800_misc_release,
-};
-
 static int __init smo8800_init(void)
 {
 	int result = 0;
@@ -232,20 +251,12 @@ static int __init smo8800_init(void)
 		return -ENODEV;
 	}
 
-	smo8800_dev.miscdev.minor	= MISC_DYNAMIC_MINOR;
-	smo8800_dev.miscdev.name	= "freefall";
-	smo8800_dev.miscdev.fops	= &smo8800_misc_fops;
-	init_waitqueue_head(&smo8800_dev.misc_wait);
-	if (misc_register(&smo8800_dev.miscdev))
-		pr_err("misc_register failed\n");
-
 	return 0;
 }
 
 static void __exit smo8800_exit(void)
 {
 	acpi_bus_unregister_driver(&latitude_acc_driver);
-	misc_deregister(&smo8800_dev.miscdev);
 }
 
 module_init(smo8800_init);
