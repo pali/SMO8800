@@ -20,6 +20,9 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define DRIVER_NAME	"smo8800"
+#define pr_fmt(fmt)	DRIVER_NAME ": " fmt
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>
@@ -29,8 +32,6 @@
 #include <linux/miscdevice.h>
 #include <acpi/acpi_bus.h>
 #include <acpi/acpi_drivers.h>
-
-#define DRIVER_NAME	"smo8800"
 
 struct smo8800 {
 	void			*bus_priv;
@@ -53,7 +54,7 @@ static irqreturn_t smo8800_interrupt_quick(int irq, void *data)
 
 static irqreturn_t smo8800_interrupt_thread(int irq, void *data)
 {
-	printk(KERN_DEBUG DRIVER_NAME ": Detected free fall\n");
+	pr_debug("Detected free fall\n");
 	return IRQ_HANDLED;
 }
 
@@ -77,7 +78,7 @@ static void smo8800_enum_resources(struct acpi_device *device)
 	status = acpi_walk_resources(device->handle, METHOD_NAME__CRS,
 				     smo8800_get_resource, &smo8800_dev.irq);
 	if (ACPI_FAILURE(status))
-		printk(KERN_DEBUG DRIVER_NAME ": Error getting resources\n");
+		pr_debug("Error getting resources\n");
 }
 
 static int smo8800_misc_open(struct inode *inode, struct file *file)
@@ -118,9 +119,7 @@ static ssize_t smo8800_misc_read(struct file *file, char __user *buf,
 	add_wait_queue(&smo_data->misc_wait, &wait);
 	while (true) {
 		set_current_state(TASK_INTERRUPTIBLE);
-/*		printk(KERN_DEBUG DRIVER_NAME ": COUNT %d\n", smo_data->count); */
 		data = atomic_xchg(&smo_data->count, 0);
-/*		printk(KERN_DEBUG DRIVER_NAME ": COUNT %d DATA %d\n", smo_data->count, data); */
 		if (data) {
 			break;
 		}
@@ -186,11 +185,11 @@ static int smo8800_add(struct acpi_device *device)
 	smo8800_enum_resources(device);
 
 	if (!smo8800_dev.irq) {
-		printk(KERN_DEBUG DRIVER_NAME "No IRQ. Disabling /dev/freefall\n");
+		pr_err("No IRQ. Disabling /dev/freefall\n");
 		goto out;
 	}
 
-	printk(KERN_DEBUG DRIVER_NAME ": IRQ %d\n", smo8800_dev.irq);
+	pr_info("IRQ %d\n", smo8800_dev.irq);
 
 	err = request_threaded_irq(smo8800_dev.irq, smo8800_interrupt_quick,
 				   smo8800_interrupt_thread,
