@@ -18,7 +18,6 @@
  */
 
 #define DRIVER_NAME "smo8800"
-#define pr_fmt(fmt) DRIVER_NAME ": " fmt
 
 #include <linux/kernel.h>
 #include <linux/module.h>
