@@ -27,7 +27,7 @@
 
 struct smo8800_device {
 	u32 irq;                     /* acpi device irq */
-	atomic_t count;              /* count after last read */
+	atomic_t counter;            /* count after last read */
 	struct miscdevice miscdev;   /* for /dev/freefall */
 	unsigned long misc_opened;   /* whether the device is open */
 	wait_queue_head_t misc_wait; /* Wait queue for the misc dev */
@@ -37,7 +37,8 @@ struct smo8800_device {
 static irqreturn_t smo8800_interrupt_quick(int irq, void *data)
 {
 	struct smo8800_device *smo8800 = data;
-	atomic_inc(&smo8800->count);
+
+	atomic_inc(&smo8800->counter);
 	wake_up_interruptible(&smo8800->misc_wait);
 	return IRQ_WAKE_THREAD;
 }
@@ -45,6 +46,7 @@ static irqreturn_t smo8800_interrupt_quick(int irq, void *data)
 static irqreturn_t smo8800_interrupt_thread(int irq, void *data)
 {
 	struct smo8800_device *smo8800 = data;
+
 	dev_info(smo8800->dev, "detected free fall\n");
 	return IRQ_HANDLED;
 }
@@ -86,48 +88,30 @@ static ssize_t smo8800_misc_read(struct file *file, char __user *buf,
 	struct smo8800_device *smo8800 = container_of(file->private_data,
 					 struct smo8800_device, miscdev);
 
-	DECLARE_WAITQUEUE(wait, current);
-	u32 data;
-	unsigned char byte_data;
+	u32 data = 0;
+	unsigned char byte_data = 0;
 	ssize_t retval = 1;
 
 	if (count < 1)
 		return -EINVAL;
 
-	add_wait_queue(&smo8800->misc_wait, &wait);
-	while (true) {
-		set_current_state(TASK_INTERRUPTIBLE);
-		data = atomic_xchg(&smo8800->count, 0);
-		if (data)
-			break;
+	atomic_set(&smo8800->counter, 0);
+	retval = wait_event_interruptible(smo8800->misc_wait,
+				(data = atomic_xchg(&smo8800->counter, 0)));
 
-		if (file->f_flags & O_NONBLOCK) {
-			retval = -EAGAIN;
-			goto out;
-		}
+	if (retval)
+		return retval;
 
-		if (signal_pending(current)) {
-			retval = -ERESTARTSYS;
-			goto out;
-		}
-
-		schedule();
-	}
+	byte_data = 1;
+	retval = 1;
 
 	if (data < 255)
 		byte_data = data;
 	else
 		byte_data = 255;
 
-	/* make sure we are not going into copy_to_user() with
-	 * TASK_INTERRUPTIBLE state */
-	set_current_state(TASK_RUNNING);
-	if (copy_to_user(buf, &byte_data, sizeof(byte_data)))
+	if (put_user(byte_data, buf))
 		retval = -EFAULT;
-
-out:
-	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&smo8800->misc_wait, &wait);
 
 	return retval;
 }
@@ -140,7 +124,7 @@ static int smo8800_misc_open(struct inode *inode, struct file *file)
 	if (test_and_set_bit(0, &smo8800->misc_opened))
 		return -EBUSY; /* already open */
 
-	atomic_set(&smo8800->count, 0);
+	atomic_set(&smo8800->counter, 0);
 	return 0;
 }
 
@@ -165,9 +149,6 @@ static int smo8800_add(struct acpi_device *device)
 	int err;
 	struct smo8800_device *smo8800;
 
-	if (!device)
-		return -EINVAL;
-
 	smo8800 = devm_kzalloc(&device->dev, sizeof(*smo8800), GFP_KERNEL);
 	if (!smo8800) {
 		dev_err(&device->dev, "failed to allocate device data\n");
@@ -187,7 +168,6 @@ static int smo8800_add(struct acpi_device *device)
 		return err;
 	}
 
-	atomic_set(&smo8800->count, 0);
 	device->driver_data = smo8800;
 
 	smo8800->irq = smo8800_get_irq(device);
@@ -208,7 +188,7 @@ static int smo8800_add(struct acpi_device *device)
 		goto error;
 	}
 
-	dev_info(&device->dev, "device /dev/freefall registered with IRQ %d\n",
+	dev_dbg(&device->dev, "device /dev/freefall registered with IRQ %d\n",
 		 smo8800->irq);
 	return 0;
 
@@ -220,9 +200,10 @@ error:
 static int smo8800_remove(struct acpi_device *device)
 {
 	struct smo8800_device *smo8800 = device->driver_data;
+
 	free_irq(smo8800->irq, smo8800);
 	misc_deregister(&smo8800->miscdev);
-	dev_info(&device->dev, "device /dev/freefall unregistered\n");
+	dev_dbg(&device->dev, "device /dev/freefall unregistered\n");
 	return 0;
 }
 
