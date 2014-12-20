@@ -7,3 +7,8 @@ freefall: freefall.c
 
 clean:
 	rm -f freefall
+
+install: all
+	mkdir -p $(DESTDIR)/etc/init $(DESTDIR)/usr/sbin
+	cp -a freefall.conf $(DESTDIR)/etc/init/
+	cp -a freefall $(DESTDIR)/usr/sbin/
