@@ -1,0 +1,17 @@
+Source: dell-smo8800
+Section: kernel
+Priority: extra
+Maintainer: Pali Rohár <pali.rohar@gmail.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Homepage: https://github.com/pali/SMO8800
+
+Package: dell-smo8800-dkms
+Architecture: all
+Depends: dkms
+Description: Dell Latitude freefall driver (ACPI SMO88XX) (DKMS)
+
+Package: freefall
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, dell-smo8800-dkms
+Description: Accelerometer program for disk protection on HP/DELL machines

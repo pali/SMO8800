@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_OPTIONS
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	$(MAKE) -C UserSpace clean
+
+override_dh_auto_build:
+	$(MAKE) -C UserSpace
+
+override_dh_auto_install:
+	mkdir -p debian/freefall debian/freefall
+	$(MAKE) dkms-copy DESTDIR=$(CURDIR)/debian/dell-smo8800-dkms
+	$(MAKE) -C UserSpace install DESTDIR=$(CURDIR)/debian/freefall
