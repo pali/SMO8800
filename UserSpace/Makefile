@@ -1,9 +1,9 @@
 CFLAGS+=-O2 -Wall
 
-all: dellfall
+all: freefall
 
-dellfall: dellfall.c
-	$(CC) $(CFLAGS) dellfall.c -o $@
+freefall: freefall.c
+	$(CC) $(CFLAGS) freefall.c -o $@
 
 clean:
-	rm -f dellfall
+	rm -f freefall
