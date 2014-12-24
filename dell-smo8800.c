@@ -24,6 +24,7 @@
 #include <linux/acpi.h>
 #include <linux/interrupt.h>
 #include <linux/miscdevice.h>
+#include <linux/version.h>
 
 struct smo8800_device {
 	u32 irq;                     /* acpi device irq */
@@ -197,7 +198,11 @@ error:
 	return err;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
 static int smo8800_remove(struct acpi_device *device)
+#else
+static int smo8800_remove(struct acpi_device *device, int type)
+#endif
 {
 	struct smo8800_device *smo8800 = device->driver_data;
 
@@ -232,7 +237,20 @@ static struct acpi_driver smo8800_driver = {
 	.owner = THIS_MODULE,
 };
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)
 module_acpi_driver(smo8800_driver);
+#else
+static int __init smo8800_init(void)
+{
+	return acpi_bus_register_driver(&smo8800_driver);
+}
+static void __exit smo8800_exit(void)
+{
+	acpi_bus_unregister_driver(&smo8800_driver);
+}
+module_init(smo8800_init);
+module_exit(smo8800_exit);
+#endif
 
 MODULE_DESCRIPTION("Dell Latitude freefall driver (ACPI SMO88XX)");
 MODULE_LICENSE("GPL");
