@@ -12,3 +12,4 @@ install: all
 	mkdir -p $(DESTDIR)/etc/init $(DESTDIR)/usr/sbin
 	cp -a freefall.conf $(DESTDIR)/etc/init/
 	cp -a freefall $(DESTDIR)/usr/sbin/
+	cp -a dell-lis3lv02d.conf $(DESTDIR)/etc/init/

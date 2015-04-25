@@ -14,4 +14,12 @@ Description: Dell Latitude freefall driver (ACPI SMO88XX) (DKMS)
 Package: freefall
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, dell-smo8800-dkms
-Description: Accelerometer program for disk protection on HP/DELL machines
+Description: Freefall program for disk protection on HP/DELL machines
+
+Package: dell-lis3lv02d
+Architecture: all
+Description: Dell Latitude 3 axes accelerometer support
+ This package contains support script which loads lis3lv02d.ko kernel driver
+ with correct configuration.
+ .
+ Supported Dell Latitude models: E6540 E6440 E6440ATG E5250 E5450 E5550

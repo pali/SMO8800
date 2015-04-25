@@ -1,3 +1,9 @@
+dell-smo8800 (1.0.2) unstable; urgency=low
+
+  * Add new package dell-lis3lv02d with 3 axes accelerometer support
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sat, 25 Apr 2015 21:06:21 +0200
+
 dell-smo8800 (1.0.1) unstable; urgency=low
 
   * Add support for older kernel versions

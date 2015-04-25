@@ -13,6 +13,7 @@ override_dh_auto_build:
 	$(MAKE) -C UserSpace
 
 override_dh_auto_install:
-	mkdir -p debian/freefall debian/freefall
+	mkdir -p debian/dell-smo8800-dkms debian/freefall debian/dell-lis3lv02d/etc/init
 	$(MAKE) dkms-copy DESTDIR=$(CURDIR)/debian/dell-smo8800-dkms
 	$(MAKE) -C UserSpace install DESTDIR=$(CURDIR)/debian/freefall
+	mv debian/freefall/etc/init/dell-lis3lv02d.conf debian/dell-lis3lv02d/etc/init/
