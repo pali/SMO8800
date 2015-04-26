@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for dell-smo8800
+# postinst script for dell-smo8800-dkms
 #
 # see: dh_installdeb(1)
 
@@ -20,8 +20,9 @@ set -e
 
 case "$1" in
     configure)
-        dkms add dell-smo8800/1.0 || true
-        dkms autoinstall dell-smo8800/1.0 || true
+        for kernel in $(ls /lib/modules/); do
+            dkms install dell-smo8800/1.0 -k $kernel || true
+        done
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

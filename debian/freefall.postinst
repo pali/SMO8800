@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for dell-smo8800
+# postinst script for freefall
 #
 # see: dh_installdeb(1)
 

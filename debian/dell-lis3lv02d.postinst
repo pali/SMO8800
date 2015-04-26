@@ -1,5 +1,5 @@
 #!/bin/sh
-# postinst script for dell-smo8800
+# postinst script for dell-lis3lv02d
 #
 # see: dh_installdeb(1)
 
@@ -25,6 +25,8 @@ case "$1" in
             tac /etc/default/grub | sed -E '0,/^\s*GRUB_CMDLINE_LINUX="/s/^(\s*GRUB_CMDLINE_LINUX=".*)"$/\1 acpi_enforce_resources=lax"/' | tac > /etc/default/grub.dell-lis3lv02d
             mv /etc/default/grub.dell-lis3lv02d /etc/default/grub
             update-grub
+        else
+            start dell-lis3lv02d || true
         fi
     ;;
 

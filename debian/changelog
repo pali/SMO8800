@@ -1,3 +1,9 @@
+dell-smo8800 (1.0.3) unstable; urgency=low
+
+  * Fix debian and dkms files
+
+ -- Pali Rohár <pali.rohar@gmail.com>  Sun, 26 Apr 2015 16:34:00 +0200
+
 dell-smo8800 (1.0.2) unstable; urgency=low
 
   * Add new package dell-lis3lv02d with 3 axes accelerometer support
